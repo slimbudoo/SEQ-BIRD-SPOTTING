@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>East Coast Bird Spotting Checklist</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&display=swap">
+    <style>
+        body {
+            font-family: 'Bungee', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            text-align: center;
+        }
+        .bird-list {
+            max-width: 800px;
+            width: 90%;
+            margin-top: 20px;
+        }
+        .bird-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .bird-item img {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+        }
+        .bird-info {
+            flex: 1;
+            padding-left: 15px;
+        }
+        .bird-name {
+            font-size: 1.5em;
+            margin: 0;
+        }
+        .bird-checkbox {
+            margin-left: auto;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>East Coast Bird Spotting Checklist</h1>
+    </header>
+    <div class="bird-list" id="birdList"></div>
+    
+    <!-- Modal -->
+    <div id="birdModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2 id="modalBirdName"></h2>
+            <p><strong>Latin Name:</strong> <span id="modalLatinName"></span></p>
+            <p><strong>Diet:</strong> <span id="modalDiet"></span></p>
+            <p><strong>Fun Facts:</strong></p>
+            <ul id="modalFacts"></ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const birdListContainer = document.getElementById('birdList');
+            const birdModal = document.getElementById('birdModal');
+            const closeModal = document.getElementById('closeModal');
+            const modalBirdName = document.getElementById('modalBirdName');
+            const modalLatinName = document.getElementById('modalLatinName');
+            const modalDiet = document.getElementById('modalDiet');
+            const modalFacts = document.getElementById('modalFacts');
+
+            const birds = [
+                { name: "Rainbow Lorikeet", latinName: "Trichoglossus moluccanus", diet: "Nectar, fruits, seeds", facts: ["Known for vibrant colours.", "Lives in pairs or flocks.", "Loud and playful."] },
+                { name: "Sulphur-crested Cockatoo", latinName: "Cacatua galerita", diet: "Seeds, fruits, insects", facts: ["Recognizable by yellow crest.", "Can live up to 70 years.", "Known for loud calls."] },
+                { name: "Australian Magpie", latinName: "Gymnorhina tibicen", diet: "Insects, small animals, seeds", facts: ["Famous for territorial swooping.", "Known for melodious warbling.", "Lives in family groups."] },
+                { name: "Kookaburra", latinName: "Dacelo novaeguineae", diet: "Small animals, insects", facts: ["Known for laughing call.", "Largest kingfisher species.", "Territorial by nature."] },
+                { name: "Galah", latinName: "Eolophus roseicapilla", diet: "Seeds, fruits, roots", facts: ["Also called rose-breasted cockatoo.", "Often seen in large flocks.", "Very social birds."] },
+                { name: "Pied Currawong", latinName: "Strepera graculina", diet: "Insects, small vertebrates, fruits", facts: ["Recognizable by black plumage.", "Strong, melodious call.", "Often seen in urban areas."] },
+                { name: "Australian White Ibis", latinName: "Threskiornis molucca", diet: "Insects, crustaceans, human scraps", facts: ["Also called 'bin chicken'.", "Adaptable to urban environments.", "Feeds in shallow water."] },
+                { name: "Superb Fairywren", latinName: "Malurus cyaneus", diet: "Insects, small seeds", facts: ["Males have bright blue feathers.", "Lives in social groups.", "Known for tail flicking."] },
+                { name: "Red Wattlebird", latinName: "Anthochaera carunculata", diet: "Nectar, insects, fruit", facts: ["Recognizable by red wattles.", "Noisy and aggressive feeders.", "Common in gardens."] },
+                { name: "Laughing Dove", latinName: "Spilopelia senegalensis", diet: "Seeds, grains", facts: ["Soft cooing call.", "Pinkish-brown plumage.", "Lives in pairs or small groups."] },
+                { name: "Eastern Rosella", latinName: "Platycercus eximius", diet: "Seeds, fruits, buds", facts: ["Bright multi-coloured plumage.", "Often found in open woodlands.", "Nests in tree hollows."] },
+                { name: "Noisy Miner", latinName: "Manorina melanocephala", diet: "Nectar, insects, fruit", facts: ["Highly aggressive towards other birds.", "Lives in colonies.", "Recognizable by noisy call."] },
+                { name: "Silver Gull", latinName: "Chroicocephalus novaehollandiae", diet: "Fish, invertebrates, human scraps", facts: ["Commonly seen around coastal areas.", "Adapted to urban environments.", "Also known as 'seagull'."] },
+                { name: "Eastern Spinebill", latinName: "Acanthorhynchus tenuirostris", diet: "Nectar, insects", facts: ["Recognizable by curved bill.", "Agile and fast in flight.", "Common in gardens."] },
+                { name: "Little Corella", latinName: "Cacatua sanguinea", diet: "Seeds, grains", facts: ["Small white cockatoo.", "Often seen in large flocks.", "Loves to play and hang upside down."] },
+                { name: "Crimson Rosella", latinName: "Platycercus elegans", diet: "Seeds, fruits, insects", facts: ["Bright red and blue plumage.", "Lives in forests and gardens.", "Nests in tree hollows."] },
+                { name: "Pacific Black Duck", latinName: "Anas superciliosa", diet: "Aquatic plants, insects", facts: ["Often seen in freshwater.", "Recognizable by black eye stripe.", "Dabbles for food in water."] },
+                { name: "Masked Lapwing", latinName: "Vanellus miles", diet: "Insects, small animals", facts: ["Often seen in open areas.", "Has distinctive yellow facial wattles.", "Known for loud alarm calls."] },
+                { name: "Willie Wagtail", latinName: "Rhipidura leucophrys", diet: "Insects", facts: ["Recognizable by fanned tail.", "Very territorial.", "Often follows large animals."] },
+                { name: "White-bellied Sea Eagle", latinName: "Haliaeetus leucogaster", diet: "Fish, birds, reptiles", facts: ["Large raptor seen near coasts.", "Recognizable by white head.", "Soars with broad wings."] },
+                { name: "Black-faced Cuckooshrike", latinName: "Coracina novaehollandiae", diet: "Insects, fruits", facts: ["Distinctive black mask on face.", "Migratory species.", "Often seen alone or in pairs."] },
+                { name: "Wedge-tailed Eagle", latinName: "Aquila audax", diet: "Carrion, mammals", facts: ["Australia's largest bird of prey.", "Recognizable by wedge-shaped tail.", "Can soar for hours."] },
+                { name: "Pied Butcherbird", latinName: "Cracticus nigrogularis", diet: "Insects, small animals", facts: ["Distinctive black and white plumage.", "Has a beautiful song.", "Often seen perched high."] },
+                { name: "Barn Owl", latinName: "Tyto alba", diet: "Small mammals, birds", facts: ["Recognizable by heart-shaped face.", "Nocturnal hunter.", "Silent flight to catch prey."] }
+            ];
+
+            const savedBirds = JSON.parse(localStorage.getItem('spottedBirds')) || [];
+
+            function renderBirds() {
+                birdListContainer.innerHTML = '';
+                birds.forEach((bird, index) => {
+                    const birdItem = document.createElement('div');
+                    birdItem.classList.add('bird-item');
+
+                    const birdImg = document.createElement('img');
+                    birdImg.src = `https://loremflickr.com/100/100/${bird.name.replace(/\s+/g, '-')}`;
+                    birdImg.alt = bird.name;
+
+                    birdItem.addEventListener('click', () => {
+                        showBirdDetails(bird);
+                    });
+
+                    const birdInfo = document.createElement('div');
+                    birdInfo.classList.add('bird-info');
+
+                    const birdName = document.createElement('p');
+                    birdName.classList.add('bird-name');
+                    birdName.textContent = bird.name;
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.classList.add('bird-checkbox');
+                    checkbox.checked = savedBirds.includes(index);
+                    checkbox.addEventListener('change', (e) => {
+                        e.stopPropagation(); // Prevent triggering the modal
+                        if (checkbox.checked) {
+                            if (!savedBirds.includes(index)) savedBirds.push(index);
+                        } else {
+                            const idx = savedBirds.indexOf(index);
+                            if (idx > -1) savedBirds.splice(idx, 1);
+                        }
+                        localStorage.setItem('spottedBirds', JSON.stringify(savedBirds));
+                    });
+
+                    birdInfo.appendChild(birdName);
+                    birdItem.appendChild(birdImg);
+                    birdItem.appendChild(birdInfo);
+                    birdItem.appendChild(checkbox);
+
+                    birdListContainer.appendChild(birdItem);
+                });
+            }
+
+            function showBirdDetails(bird) {
+                modalBirdName.textContent = bird.name;
+                modalLatinName.textContent = bird.latinName;
+                modalDiet.textContent = bird.diet;
+                modalFacts.innerHTML = '';
+                bird.facts.forEach(fact => {
+                    const factItem = document.createElement('li');
+                    factItem.textContent = fact;
+                    modalFacts.appendChild(factItem);
+                });
+                birdModal.style.display = "block";
+            }
+
+            closeModal.addEventListener('click', () => {
+                birdModal.style.display = "none";
+            });
+
+            window.addEventListener('click', (event) => {
+                if (event.target == birdModal) {
+                    birdModal.style.display = "none";
+                }
+            });
+
+            renderBirds();
+        });
+    </script>
+</body>
+</html>
